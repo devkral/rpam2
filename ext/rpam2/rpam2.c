@@ -48,5 +48,5 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
 
 void Init_rpam2() {
     rpam2 = rb_define_module("Rpam2");
-    rb_define_method(rpam2, "authpam", method_authpam, 3);
+    rb_define_singleton_method(rpam2, "authpam", method_authpam, 3);
 }
