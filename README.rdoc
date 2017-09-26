@@ -1,0 +1,33 @@
+= rpam2
+
+* http://rubyforge.org/projects/rpam2
+
+== DESCRIPTION:
+
+  This extension provides a PAM (Pluggable Authentication Modules)
+  integration to ruby. It is inspired by rpam but provides a configurable
+  servicename and is licensed under MIT.
+
+== EXAMPLE:
+
+  require 'rpam2'
+
+  if authpam("servicename", "user", "password")
+    puts "Authentication successful"
+  else
+  	puts "Authentication failed"
+  end
+
+== REQUIREMENTS:
+
+* pam-dev
+* ruby-dev
+
+== INSTALL:
+
+* gem install rpam2
+
+Or manually:
+
+* gem build rpam2.gemspec
+* gem install ./rpam2-2.0.0.gem
