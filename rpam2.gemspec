@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   Modules) integration"
   s.extra_rdoc_files = ["README.rdoc"]
   s.authors = ["Alexander K."]
-  s.files = ["ext/rpam2/rpam2.c", "ext/rpam2/extconf.rb", "rpam2.gemspec", "README.rdoc", "LICENSE.txt"]
+  s.files = ["lib/rpam2.rb", "ext/rpam2/rpam2.c", "ext/rpam2/extconf.rb", "rpam2.gemspec", "README.rdoc", "LICENSE.txt"]
   s.has_rdoc = true
   s.license = "MIT"
   s.extensions = ["ext/rpam2/extconf.rb"]

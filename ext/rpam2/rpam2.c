@@ -7,21 +7,15 @@ static const char
 VALUE rpam2;
 void Init_Rpam2();
 
-static VALUE method_authpam(VALUE servicename, VALUE username, VALUE password) {
+static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE password) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
+    Check_Type(username, T_STRING);
+    Check_Type(password, T_STRING);
+
     char *service = rpam_default_servicename;
-    switch (TYPE(servicename))
-    {
-        case T_STRING:
-            /* handle string */
-            service = StringValueCStr(servicename);
-            break;
-        case T_NIL:
-            /* handle nil */
-            break;
-        default:
-            rb_raise(rb_eTypeError, "Only String and nil are valid servicename types");
+    if(!NIL_P(servicename)){
+        service = StringValueCStr(servicename);
     }
     pam_start(service, StringValueCStr(username), NULL, &pamh);
     if (result != PAM_SUCCESS) {
