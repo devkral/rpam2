@@ -5,7 +5,7 @@ static const char
 *rpam_default_servicename = "rpam";
 
 VALUE rpam2;
-void Init_rpam2();
+void Init_Rpam2();
 
 static VALUE method_authpam(VALUE servicename, VALUE username, VALUE password) {
     pam_handle_t* pamh = NULL;
@@ -53,6 +53,6 @@ static VALUE method_authpam(VALUE servicename, VALUE username, VALUE password) {
 }
 
 void Init_rpam2() {
-    rpam2 = rb_define_module("rpam2");
+    rpam2 = rb_define_module("Rpam2");
     rb_define_method(rpam2, "authpam", method_authpam, 3);
 }
