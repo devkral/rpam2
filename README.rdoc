@@ -15,7 +15,7 @@
   if authpam("servicename", "user", "password")
     puts "Authentication successful"
   else
-  	puts "Authentication failed"
+    puts "Authentication failed"
   end
 
 == REQUIREMENTS:
