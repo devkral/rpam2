@@ -37,4 +37,5 @@ Or manually:
 require 'rpam2'
 
 Rpam2.authpam("servicename", "username", "password")
+
 Rpam2.accountpam("servicename", "username")
