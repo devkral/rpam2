@@ -31,3 +31,10 @@ Or manually:
 
 * gem build rpam2.gemspec
 * gem install ./rpam2-2.0.0.gem
+
+== Usage:
+
+require 'rpam2'
+
+Rpam2.authpam("servicename", "username", "password")
+Rpam2.accountpam("servicename", "username")
