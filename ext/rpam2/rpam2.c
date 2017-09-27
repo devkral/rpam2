@@ -4,6 +4,9 @@
 static const char *const
 rpam_default_servicename = "rpam";
 
+struct auth_wrapper{
+  char* pw;
+};
 
 static VALUE
 method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE password);
@@ -19,37 +22,39 @@ void Init_rpam2(){
 }
 
 int rpam_auth_conversation(int num_msg, const struct pam_message **msgm,
-                           struct pam_response **responses, void *appdata_ptr){
-    responses = calloc(num_msg, sizeof(struct pam_response));
+                           struct pam_response **resp, void *appdata_ptr){
+    struct pam_response *responses = calloc(num_msg, sizeof(struct pam_response));
     // no space for responses
     if (!responses)
         return PAM_BUF_ERR;
-    char *pw = (char *)appdata_ptr;
+    struct auth_wrapper *authw = (struct auth_wrapper *)appdata_ptr;
     for (int msgc=0; msgc<num_msg; msgc++){
         switch (msgm[msgc]->msg_style) {
             case PAM_PROMPT_ECHO_OFF:
                 // Assume ECHO_OFF is password/secret input
-                responses[msgc]->resp = strdup(pw);
+                responses[msgc].resp = strdup(authw->pw);
+                break;
             case PAM_PROMPT_ECHO_ON:
             case PAM_TEXT_INFO:
                 // ignore, they should not occur but some verbose applications exist always
-                responses[msgc]->resp = strdup("");
+                responses[msgc].resp = strdup("");
                 break;
             case PAM_ERROR_MSG:
                 // print error message
                 rb_warn("%s", msgm[msgc]->msg);
-                responses[msgc]->resp = strdup("");
+                responses[msgc].resp = strdup("");
                 break;
             default:
                 free(responses);
                 return PAM_CONV_ERR;
         }
         // response could not be allocated (no space)
-        if(responses[msgc]->resp==0){
+        if(responses[msgc].resp==0){
             free(responses);
             return PAM_BUF_ERR;
         }
     }
+    *resp = responses;
     return PAM_SUCCESS;
 }
 
@@ -66,11 +71,14 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
 
     struct pam_conv auth_c;
     auth_c.conv = rpam_auth_conversation;
-    auth_c.appdata_ptr = StringValueCStr(password);
+
+    struct auth_wrapper authw;
+    authw.pw = StringValueCStr(password);
+    auth_c.appdata_ptr = &authw;
 
     pam_start(service, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
-        rb_warn("pam initialisation failed");
+        rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
 
@@ -89,7 +97,7 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
     if (pam_end(pamh, result) == PAM_SUCCESS)
         return Qtrue;
     else {
-        rb_warn("pam end failed");
+        rb_warn("END: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
 }
@@ -107,7 +115,7 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
     struct pam_conv auth_c = {0,0};
     pam_start(service, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
-        rb_warn("pam initialisation failed");
+        rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
 
@@ -120,7 +128,7 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
     if (pam_end(pamh, result) == PAM_SUCCESS)
         return Qtrue;
     else {
-        rb_warn("pam end failed");
+        rb_warn("END: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
 }

@@ -11,5 +11,7 @@ Gem::Specification.new do |s|
   s.files = ["lib/rpam2.rb", "ext/rpam2/rpam2.c", "ext/rpam2/extconf.rb", "rpam2.gemspec", "README.rdoc", "LICENSE.txt"]
   s.has_rdoc = true
   s.license = "MIT"
+  s.homepage = "http://github.com/devkral/rpam2"
+  s.require_paths = ["lib"]
   s.extensions = ["ext/rpam2/extconf.rb"]
 end
