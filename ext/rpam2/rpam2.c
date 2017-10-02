@@ -1,4 +1,5 @@
 #include "ruby.h"
+#include <string.h>
 #include <security/pam_appl.h>
 
 static const char *const
@@ -15,10 +16,10 @@ static VALUE
 method_accountpam(VALUE self, VALUE servicename, VALUE username);
 
 static VALUE
-method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname);
+method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession);
 
 static VALUE
-method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password);
+method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession);
 
 
 VALUE rpam2;
@@ -26,8 +27,8 @@ void Init_rpam2(){
     rpam2 = rb_define_module("Rpam2");
     rb_define_singleton_method(rpam2, "auth", method_authpam, 3);
     rb_define_singleton_method(rpam2, "account", method_accountpam, 2);
-    rb_define_singleton_method(rpam2, "getenv", method_getenvpam, 4);
-    rb_define_singleton_method(rpam2, "listenv", method_listenvpam, 3);
+    rb_define_singleton_method(rpam2, "getenv", method_getenvpam, 5);
+    rb_define_singleton_method(rpam2, "listenv", method_listenvpam, 4);
 }
 
 int rpam_auth_conversation(int num_msg, const struct pam_message **msgm,
@@ -143,9 +144,10 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
 }
 
 
-static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname) {
+static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
+    VALUE ret2;
     Check_Type(username, T_STRING);
     Check_Type(password, T_STRING);
     Check_Type(envname, T_STRING);
@@ -168,45 +170,42 @@ static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VAL
         return Qnil;
     }
 
-    result = pam_acct_mgmt(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
-        return Qnil;
-    }
-
     result = pam_authenticate(pamh, 0);
     if (result != PAM_SUCCESS) {
         pam_end(pamh, result);
         return Qnil;
     }
 
-    result = pam_open_session(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        rb_warn("SESSION OPEN: %s", pam_strerror(pamh, result));
-        pam_end(pamh, result);
-        return Qnil;
+    if (RTEST(opensession)){
+        result = pam_open_session(pamh, 0);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SESSION OPEN: %s", pam_strerror(pamh, result));
+            pam_end(pamh, result);
+            return Qnil;
+        }
+    }
+    char *ret = pam_getenv(pamh, StringValueCStr(envname));
+    if(ret){
+        ret2 = rb_str_new_cstr(ret);
+    } else {
+        ret2 = Qnil;
     }
 
-    char *ret = pam_getenv(pamh, StringValueCStr(envname));
-
-    result = pam_close_session(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        rb_warn("SESSION END: %s", pam_strerror(pamh, result));
+    if (RTEST(opensession)){
+        result = pam_close_session(pamh, 0);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SESSION END: %s", pam_strerror(pamh, result));
+        }
     }
 
     result = pam_end(pamh, result);
     if (result != PAM_SUCCESS) {
         rb_warn("END: %s", pam_strerror(pamh, result));
     }
-
-    if(ret){
-        return rb_str_new_cstr(ret);
-    } else {
-        return Qnil;
-    }
+    return ret2;
 }
 
-static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password) {
+static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
     Check_Type(username, T_STRING);
@@ -230,44 +229,43 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
         return Qnil;
     }
 
-    result = pam_acct_mgmt(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
-        return Qnil;
-    }
-
     result = pam_authenticate(pamh, 0);
     if (result != PAM_SUCCESS) {
         pam_end(pamh, result);
         return Qnil;
     }
 
-    result = pam_open_session(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        rb_warn("SESSION OPEN: %s", pam_strerror(pamh, result));
-        pam_end(pamh, result);
-        return Qnil;
+    if (RTEST(opensession)){
+        result = pam_open_session(pamh, 0);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SESSION OPEN: %s", pam_strerror(pamh, result));
+            pam_end(pamh, result);
+            return Qnil;
+        }
     }
 
     char **envlist = pam_getenvlist(pamh);
-
-    result = pam_close_session(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        rb_warn("SESSION END: %s", pam_strerror(pamh, result));
-    }
-    result = pam_end(pamh, result);
-    if (result != PAM_SUCCESS) {
-        rb_warn("END: %s", pam_strerror(pamh, result));
-    }
-
-    VALUE ret = rb_ary_new();
+    VALUE ret = rb_hash_new();
     char **tmpenvlist=envlist;
     while(*tmpenvlist!=NULL){
-        rb_ary_push(ret, rb_str_new_cstr(*tmpenvlist));
+        char *last = strchr(*tmpenvlist, '=');
+        rb_hash_aset(ret, rb_str_new(*tmpenvlist, last-*tmpenvlist), rb_str_new_cstr(last+1));
+        free(*tmpenvlist);
         tmpenvlist++;
     }
-
     free(envlist);
+
+    if (RTEST(opensession)){
+        result = pam_close_session(pamh, 0);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SESSION END: %s", pam_strerror(pamh, result));
+        }
+        result = pam_end(pamh, result);
+        if (result != PAM_SUCCESS) {
+            rb_warn("END: %s", pam_strerror(pamh, result));
+        }
+    }
+
     return ret;
 }
 
