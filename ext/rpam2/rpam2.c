@@ -254,6 +254,8 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
             rb_hash_aset(ret, rb_str_new(*tmpenvlist, last-*tmpenvlist), rb_str_new_cstr(last+1));
         }
         // strings have to be freed (specification)
+        // overwrite them with zero to prevent leakage
+        memset(*tmpenvlist, 0, strlen(*tmpenvlist));
         free(*tmpenvlist);
         tmpenvlist++;
     }
