@@ -249,10 +249,15 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
     char **tmpenvlist=envlist;
     while(*tmpenvlist!=NULL){
         char *last = strchr(*tmpenvlist, '=');
-        rb_hash_aset(ret, rb_str_new(*tmpenvlist, last-*tmpenvlist), rb_str_new_cstr(last+1));
+        // should not be needed but better be safe in a security relevant application
+        if (last!=NULL){
+            rb_hash_aset(ret, rb_str_new(*tmpenvlist, last-*tmpenvlist), rb_str_new_cstr(last+1));
+        }
+        // strings have to be freed (specification)
         free(*tmpenvlist);
         tmpenvlist++;
     }
+    // stringlist have to be freed (specification)
     free(envlist);
 
     if (RTEST(opensession)){
