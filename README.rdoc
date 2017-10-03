@@ -12,7 +12,7 @@
 
   require 'rpam2'
 
-  if authpam("servicename", "user", "password")
+  if Rpam2.auth("servicename", "user", "password")
     puts "Authentication successful"
   else
     puts "Authentication failed"
@@ -36,6 +36,10 @@ Or manually:
 
 require 'rpam2'
 
-Rpam2.authpam("servicename", "username", "password")
+Rpam2.auth("servicename", "username", "password") => (true/false)
 
-Rpam2.accountpam("servicename", "username")
+Rpam2.account("servicename", "username") => (true/false)
+
+Rpam2.getenv("servicename", "username", "password", "envvar", "opensession(true/false)") => (string/nil)
+
+Rpam2.listenv("servicename", "username", "password", "opensession(true/false)") => (hash/nil)
