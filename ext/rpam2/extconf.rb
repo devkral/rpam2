@@ -12,6 +12,7 @@ have_func("pam_acct_mgmt")
 have_func("pam_chauthtok")
 have_func("pam_set_item")
 have_func("pam_get_item")
+$CFLAGS << " -std=c99 "
 
 
 create_makefile("rpam2/rpam2")
