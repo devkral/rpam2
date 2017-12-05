@@ -9,27 +9,7 @@ struct auth_wrapper{
   char* pw;
 };
 
-static VALUE
-method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE password);
-
-static VALUE
-method_accountpam(VALUE self, VALUE servicename, VALUE username);
-
-static VALUE
-method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession);
-
-static VALUE
-method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession);
-
-
 VALUE rpam2;
-void Init_rpam2(){
-    rpam2 = rb_define_module("Rpam2");
-    rb_define_singleton_method(rpam2, "auth", method_authpam, 3);
-    rb_define_singleton_method(rpam2, "account", method_accountpam, 2);
-    rb_define_singleton_method(rpam2, "getenv", method_getenvpam, 5);
-    rb_define_singleton_method(rpam2, "listenv", method_listenvpam, 4);
-}
 
 int rpam_auth_conversation(int num_msg, const struct pam_message **msgm,
                            struct pam_response **resp, void *appdata_ptr){
@@ -68,45 +48,88 @@ int rpam_auth_conversation(int num_msg, const struct pam_message **msgm,
     return PAM_SUCCESS;
 }
 
-static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE password) {
-    pam_handle_t* pamh = NULL;
-    unsigned int result = 0;
+// password as char* ensures that no Qnil can be used
+static unsigned int _start(pam_handle_t* pamh, VALUE* service, char* password, VALUE *RUSER, VALUE* RHOST){
     struct pam_conv auth_c;
     struct auth_wrapper authw;
-    const char *service;
+    unsigned int result = 0;
 
-    Check_Type(username, T_STRING);
-    Check_Type(password, T_STRING);
+    if(service && !NIL_P(*service)){
+        result = pam_set_item(pamh, PAM_SERVICE, StringValueCStr(*service));
 
-    
-    if(!NIL_P(servicename)){
-        service = StringValueCStr(servicename);
-    } else {
-        service = rpam_default_servicename;
+        if (result != PAM_SUCCESS) {
+            rb_warn("SET SERVICE: %s", pam_strerror(pamh, result));
+            return result;
+        }
     }
 
-    auth_c.conv = rpam_auth_conversation;
+    if(RUSER && !NIL_P(*RUSER)){
+        result = pam_set_item(pamh, PAM_RUSER, StringValueCStr(*RUSER));
+        if (result != PAM_SUCCESS) {
+            rb_warn("SET RUSER: %s", pam_strerror(pamh, result));
+            return result;
+        }
+    }
 
-    authw.pw = StringValueCStr(password);
-    auth_c.appdata_ptr = &authw;
-
-    pam_start(service, StringValueCStr(username), &auth_c, &pamh);
-    if (result != PAM_SUCCESS) {
-        rb_warn("INIT: %s", pam_strerror(pamh, result));
-        return Qfalse;
+    if(RHOST && !NIL_P(*RHOST)){
+        result = pam_set_item(pamh, PAM_RHOST, StringValueCStr(*RHOST));
+        if (result != PAM_SUCCESS) {
+            rb_warn("SET RHOST: %s", pam_strerror(pamh, result));
+            return result;
+        }
     }
 
     result = pam_acct_mgmt(pamh, 0);
     if (result != PAM_SUCCESS) {
         pam_end(pamh, result);
-        return Qfalse;
+        return result;
     }
 
-    result = pam_authenticate(pamh, 0);
+    if(password){
+        result = pam_set_item(pamh, PAM_AUTHTOK, password);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SET PW: %s", pam_strerror(pamh, result));
+            return result;
+        }
+        
+        // fallback
+        auth_c.conv = rpam_auth_conversation;
+        authw.pw = StringValueCStr(password);
+        auth_c.appdata_ptr = &authw;
+    
+        result = pam_set_item(pamh, PAM_CONV, &auth_c);
+        if (result != PAM_SUCCESS) {
+            rb_warn("SET CONV: %s", pam_strerror(pamh, result));
+            return result;
+        }
+        result = pam_authenticate(pamh, 0);
+        if (result != PAM_SUCCESS) {
+            pam_end(pamh, result);
+            return result;
+        }
+    }
+    return result;
+}
+
+
+static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE ruser, VALUE rhost) {
+     pam_handle_t* pamh = NULL;
+    unsigned int result = 0;
+    struct pam_conv auth_c = {0,0};
+
+    Check_Type(username, T_STRING);
+    Check_Type(password, T_STRING);
+
+    result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
+        rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
+    
+    result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
+    if(result!=PAM_SUCCESS)
+        return Qfalse;
+
 
     if (pam_end(pamh, result) == PAM_SUCCESS)
         return Qtrue;
@@ -115,33 +138,24 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
         return Qfalse;
     }
 }
+
 
 static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
     struct pam_conv auth_c = {0,0};
-    const char *service;
-
+    
     Check_Type(username, T_STRING);
 
-    
-    if(!NIL_P(servicename)){
-        service = StringValueCStr(servicename);
-    } else {
-        service = rpam_default_servicename;
-    }
-
-    pam_start(service, StringValueCStr(username), &auth_c, &pamh);
+    result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
 
-    result = pam_acct_mgmt(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
+    result = _start(pamh, &servicename, NULL, NULL, NULL);
+    if(result!=PAM_SUCCESS)
         return Qfalse;
-    }
 
     if (pam_end(pamh, result) == PAM_SUCCESS)
         return Qtrue;
@@ -152,42 +166,26 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
 }
 
 
-static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession) {
+static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession, VALUE ruser, VALUE rhost) {
     pam_handle_t* pamh = NULL;
-    unsigned int result=0;
-    struct pam_conv auth_c;
-    struct auth_wrapper authw;
-    const char *service;
     const char *c_ret;
     VALUE ruby_ret;
-    
+    unsigned int result = 0;
+    struct pam_conv auth_c = {0,0};
+
     Check_Type(username, T_STRING);
     Check_Type(password, T_STRING);
     Check_Type(envname, T_STRING);
 
-    
-    if(!NIL_P(servicename)){
-        service = StringValueCStr(servicename);
-    } else {
-        service = rpam_default_servicename;
-    }
-
-    auth_c.conv = rpam_auth_conversation;
-
-    authw.pw = StringValueCStr(password);
-    auth_c.appdata_ptr = &authw;
-
-    pam_start(service, StringValueCStr(username), &auth_c, &pamh);
+    result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qnil;
     }
-
-    result = pam_authenticate(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
+    
+    result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
+    if(result != PAM_SUCCESS)
         return Qnil;
-    }
 
     if (RTEST(opensession)){
         result = pam_open_session(pamh, 0);
@@ -218,42 +216,29 @@ static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VAL
     return ruby_ret;
 }
 
-static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession) {
+
+static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession, VALUE ruser, VALUE rhost){
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
-    struct pam_conv auth_c;
-    struct auth_wrapper authw;
     char *last;
-    const char *service;
     char **envlist;
     char **tmpenvlist;
     VALUE ruby_ret;
+    struct pam_conv auth_c = {0,0};
 
     Check_Type(username, T_STRING);
     Check_Type(password, T_STRING);
 
     
-    if(!NIL_P(servicename)){
-        service = StringValueCStr(servicename);
-    } else {
-        service = rpam_default_servicename;
-    }
-
-    auth_c.conv = rpam_auth_conversation;
-    authw.pw = StringValueCStr(password);
-    auth_c.appdata_ptr = &authw;
-
-    pam_start(service, StringValueCStr(username), &auth_c, &pamh);
+    result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qnil;
     }
-
-    result = pam_authenticate(pamh, 0);
-    if (result != PAM_SUCCESS) {
-        pam_end(pamh, result);
+    
+    result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
+    if(result != PAM_SUCCESS)
         return Qnil;
-    }
 
     if (RTEST(opensession)){
         result = pam_open_session(pamh, 0);
@@ -294,5 +279,14 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
     }
 
     return ruby_ret;
+}
+
+
+void Init_rpam2(){
+    rpam2 = rb_define_module("Rpam2");
+    rb_define_singleton_method(rpam2, "_auth", method_authpam, 5);
+    rb_define_singleton_method(rpam2, "account", method_accountpam, 2);
+    rb_define_singleton_method(rpam2, "_getenv", method_getenvpam, 7);
+    rb_define_singleton_method(rpam2, "_listenv", method_listenvpam, 6);
 }
 

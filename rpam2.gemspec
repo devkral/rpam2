@@ -1,11 +1,10 @@
 Gem::Specification.new do |s|
   s.name = "rpam2"
-  s.version = "3.0.2"
+  s.version = "3.1.0"
   s.date = "2017-10-10"
   s.summary = "PAM integration with ruby."
   s.email = "devkral@web.de"
-  s.description = "Ruby PAM (Pluggable Authentication
-  Modules) integration"
+  s.description = "Ruby PAM (Pluggable Authentication Modules) integration"
   s.extra_rdoc_files = ["README.rdoc"]
   s.authors = ["Alexander Kaftan"]
   s.files = ["lib/rpam2.rb", "ext/rpam2/rpam2.c", "ext/rpam2/extconf.rb", "rpam2.gemspec", "README.rdoc", "LICENSE.txt"]

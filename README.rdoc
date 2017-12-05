@@ -5,8 +5,8 @@
 == DESCRIPTION:
 
   This extension provides a PAM (Pluggable Authentication Modules)
-  integration to ruby. It is inspired by rpam but provides a configurable
-  servicename and is licensed under MIT.
+  integration to ruby. It is inspired by rpam but provides much functionality
+  and is licensed under MIT.
 
 == EXAMPLE:
 
@@ -17,6 +17,12 @@
   else
     puts "Authentication failed"
   end
+  
+  puts Rpam2.listenv(nil, "user", "password") # uses default (rpam)
+  puts Rpam2.listenv("servicename", "user", "password")
+  puts Rpam2.listenv("servicename", "user", "password", true)
+  puts Rpam2.listenv("servicename", "user", "password", true, "RUSER", "RHOST")
+  puts Rpam2.listenv("servicename") # error
 
 == REQUIREMENTS:
 
@@ -36,10 +42,10 @@ Or manually:
 
 require 'rpam2'
 
-Rpam2.auth("servicename", "username", "password") => (true/false)
+Rpam2.auth("servicename", "username", "password", ["RUSER", "RHOST"]) => (true/false)
 
 Rpam2.account("servicename", "username") => (true/false)
 
-Rpam2.getenv("servicename", "username", "password", "envvar", "opensession(true/false)") => (string/nil)
+Rpam2.getenv("servicename", "username", "password", "envvar", [opensession(true/false), ["RUSER", "RHOST"]]) => (string/nil)
 
-Rpam2.listenv("servicename", "username", "password", "opensession(true/false)") => (hash/nil)
+Rpam2.listenv("servicename", "username", "password", [opensession(true/false), ["RUSER", "RHOST"]]) => (hash/nil)
