@@ -86,15 +86,9 @@ static unsigned int _start(pam_handle_t* pamh, VALUE* service, char* password, V
     }
 
     if(password){
-        result = pam_set_item(pamh, PAM_AUTHTOK, password);
-        if (result != PAM_SUCCESS) {
-            rb_warn("SET PW: %s", pam_strerror(pamh, result));
-            return result;
-        }
-        
-        // fallback
+        // cannot set token as item (except implementing some special methods) so use a conversation
         auth_c.conv = rpam_auth_conversation;
-        authw.pw = StringValueCStr(password);
+        authw.pw = password;
         auth_c.appdata_ptr = &authw;
     
         result = pam_set_item(pamh, PAM_CONV, &auth_c);
