@@ -1,5 +1,5 @@
 module Rpam2
-  VERSION = 3.1
+  VERSION = 4.0
   class << self
     def auth(*args)
       case args.size

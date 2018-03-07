@@ -1,7 +1,11 @@
 require 'mkmf'
 
 abort "missing pam library" unless have_library("pam","pam_start")
-abort "missing pam library headers" unless have_header("security/pam_appl.h")
+
+#use_pam_header = have_header("security/pam_appl.h")
+use_pam_header = false
+
+
 
 have_func("pam_end")
 have_func("pam_open_session")
@@ -11,6 +15,11 @@ have_func("pam_acct_mgmt")
 have_func("pam_set_item")
 have_func("pam_get_item")
 $CFLAGS << " -std=c99 "
+
+unless use_pam_header
+  puts "Rpam2 build without pam header, use polyfills"
+  $CFLAGS << "-DWITHOUT_PAM_HEADER=1 "
+end
 
 
 create_makefile("rpam2/rpam2")
