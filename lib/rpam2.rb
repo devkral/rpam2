@@ -1,5 +1,5 @@
 module Rpam2
-  VERSION = 2.0
+  VERSION = 3.1
   class << self
     def auth(*args)
       case args.size
@@ -11,6 +11,7 @@ module Rpam2
           raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 3 or 5)"
       end
     end
+
     def getenv(*args)
       case args.size
         when 4
@@ -23,7 +24,7 @@ module Rpam2
           raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 4, 5 or 7)"
       end
     end
-    
+
     def listenv(*args)
       case args.size
         when 3
