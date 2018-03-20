@@ -35,7 +35,7 @@ gem install rpam2
 
 or if it should not depend on pam:
 
-PAM_ALLOW_POLYFILL=true gem install rpam2
+ALLOW_NOPAM=true gem install rpam2
 
 WARNING: Don't use rpam2 in this case except for test. It isn't safe
 
@@ -56,3 +56,10 @@ Rpam2.account("servicename", "username") => (true/false)
 Rpam2.getenv("servicename", "username", "password", "envvar", [opensession(true/false), ["RUSER", "RHOST"]]) => (string/nil)
 
 Rpam2.listenv("servicename", "username", "password", [opensession(true/false), ["RUSER", "RHOST"]]) => (hash/nil)
+
+
+== Testing:
+For test purposes can Rpam2 be filled with fake data. For this mode pam is not neccessary but then you may should not access not specified services.
+Only services in fake_data are emulated the rest is redirected to real pam.
+
+Rpam2.fake_data = { usernames: Set['alex', 'hugo', 'thomas'], servicenames: Set['service1', 'service2'], password: '123456', env: { email: 'me@example.com'} }

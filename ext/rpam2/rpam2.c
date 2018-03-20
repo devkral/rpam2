@@ -7,6 +7,7 @@
 /* linux pam */
 /* status */
 #define PAM_SUCCESS 0
+#define PAM_SYMBOL_ERR 2
 #define PAM_BUF_ERR 5
 #define PAM_CONV_ERR 19
 
@@ -45,19 +46,41 @@ struct pam_conv {
 
 // fix implicit function warnings:
 
-int pam_start(const char *service_name, const char *user, const struct pam_conv *pam_conversation, pam_handle_t **pamh);
-int pam_end(pam_handle_t *pamh, int pam_status);
+int pam_start(const char *service_name, const char *user, const struct pam_conv *pam_conversation, pam_handle_t **pamh){
+    return PAM_SYMBOL_ERR;
+};
+int pam_end(pam_handle_t *pamh, int pam_status){
+    return PAM_SYMBOL_ERR;
+}
 
-int pam_authenticate(pam_handle_t *pamh, int flags);
-int pam_acct_mgmt(pam_handle_t *pamh, int flags);
-const char *pam_strerror(pam_handle_t *pamh, int errnum);
-int pam_set_item(pam_handle_t *pamh, int item_type, const void *item);
-int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item);
-char **pam_getenvlist(pam_handle_t *pamh);
-const char *pam_getenv(pam_handle_t *pamh, const char *name);
+int pam_authenticate(pam_handle_t *pamh, int flags){
+    return PAM_SYMBOL_ERR;
+}
+int pam_acct_mgmt(pam_handle_t *pamh, int flags){
+    return PAM_SYMBOL_ERR;
+}
+const char *pam_strerror(pam_handle_t *pamh, int errnum){
+    return "No PAM";
+}
+int pam_set_item(pam_handle_t *pamh, int item_type, const void *item){
+    return PAM_SYMBOL_ERR;
+}
+int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item){
+    return PAM_SYMBOL_ERR;
+}
+char **pam_getenvlist(pam_handle_t *pamh){
+    return PAM_SYMBOL_ERR;
+}
+const char *pam_getenv(pam_handle_t *pamh, const char *name){
+    return PAM_SYMBOL_ERR;
+}
 
-int pam_open_session(pam_handle_t *pamh, int flags);
-int pam_close_session(pam_handle_t *pamh, int flags);
+int pam_open_session(pam_handle_t *pamh, int flags){
+    return PAM_SYMBOL_ERR;
+}
+int pam_close_session(pam_handle_t *pamh, int flags){
+    return PAM_SYMBOL_ERR;
+}
 
 #endif
 

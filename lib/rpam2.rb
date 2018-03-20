@@ -54,12 +54,12 @@ module Rpam2
 
     def fake_compare(servicename, username)
       return false unless self.fake_data
-      self.fake_data.fetch(:servicenames, Set.new).include?(servicename) && self.fake_data.fetch(:usernames, Set.new).include?(username)
+      self.fake_data.fetch(:servicenames, Set.new).include?(servicename)
     end
 
     def _auth(servicename, username, password, ruser, rhost)
       return _authc(servicename, username, password, ruser, rhost) unless fake_compare(servicename, username)
-      self.fake_data[:password] == password
+      self.fake_data[:password] == password && self.fake_data.fetch(:usernames, Set.new).include?(username)
     end
 
     def _account(servicename, username)
@@ -69,13 +69,14 @@ module Rpam2
 
     def _getenv(servicename, username, password, opensession, varname, ruser, rhost)
       return _getenvc(servicename, username, password, opensession, varname, ruser, rhost) unless fake_compare(servicename, username)
+      return nil unless self.fake_data.fetch(:usernames, Set.new).include?(username)
       return nil if self.fake_data[:env].blank? || self.fake_data[:password] != password
       self.fake_data[:env].fetch(varname, nil)
     end
 
     def _listenv(servicename, username, password, opensession, ruser, rhost)
       return _listenvc(servicename, username, password, opensession, ruser, rhost) unless fake_compare(servicename, username)
-      return nil if self.fake_data[:password] != password
+      return nil unless self.fake_data[:password] == password &&  self.fake_data.fetch(:usernames, Set.new).include?(username)
       self.fake_data.fetch(:env, {})
     end
   end
