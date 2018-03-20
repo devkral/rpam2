@@ -1,33 +1,38 @@
 
+require 'set'
+
 require 'rpam2/rpam2'
 
 module Rpam2
   VERSION = 3.1
-  private_class_method :_auth, :_account, :_getenv, :_listenv
+
   class << self
+    attr_accessor :fake_data
+    @@fake_data = nil
+
     def auth(*args)
       case args.size
         when 3
-          self._auth(*args, nil, nil)
+          _auth(*args, nil, nil)
         when 5
-          self._auth(*args)
+          _auth(*args)
         else
           raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 3 or 5)"
       end
     end
 
     def account(servicename, username)
-      self._account(servicename, username)
+      _account(servicename, username)
     end
 
     def getenv(*args)
       case args.size
         when 4
-          self._getenv(*args, nil, nil, nil)
+          _getenv(*args, nil, nil, nil)
         when 5
-          self._getenv(*args, nil, nil)
+          _getenv(*args, nil, nil)
         when 7
-          self._getenv(*args)
+          _getenv(*args)
         else
           raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 4, 5 or 7)"
       end
@@ -36,14 +41,44 @@ module Rpam2
     def listenv(*args)
       case args.size
         when 3
-          self._listenv(*args, nil, nil, nil)
+          _listenv(*args, nil, nil, nil)
         when 4
-          self._listenv(*args, nil, nil)
+          _listenv(*args, nil, nil)
         when 6
-          self._listenv(*args)
+          _listenv(*args)
         else
           raise ArgumentError, "wrong number of arguments (given #{args.size}, expected 3, 4 or 6)"
       end
     end
+
+    private
+
+    def fake_compare(servicename, username)
+      return false unless self.fake_data
+      self.fake_data.fetch(:servicenames, Set.new).include?(servicename) && self.fake_data.fetch(:usernames, Set.new).include?(username)
+    end
+
+    def _auth(servicename, username, password, ruser, rhost)
+      return _authc(servicename, username, password, ruser, rhost) unless fake_compare(servicename, username)
+      self.fake_data[:password] == password
+    end
+
+    def _account(servicename, username)
+      return _accountc(servicename, username) unless self.fake_data && self.fake_data.fetch(:servicenames, Set.new).include?(servicename)
+      self.fake_data.fetch(:usernames, Set.new).include?(username)
+    end
+
+    def _getenv(servicename, username, password, opensession, varname, ruser, rhost)
+      return _getenvc(servicename, username, password, opensession, varname, ruser, rhost) unless fake_compare(servicename, username)
+      return nil if self.fake_data[:env].blank? || self.fake_data[:password] != password
+      self.fake_data[:env].fetch(varname, nil)
+    end
+
+    def _listenv(servicename, username, password, opensession, ruser, rhost)
+      return _listenvc(servicename, username, password, opensession, ruser, rhost) unless fake_compare(servicename, username)
+      return nil if self.fake_data[:password] != password
+      self.fake_data.fetch(:env, {})
+    end
   end
+  private_class_method :_authc, :_accountc, :_getenvc, :_listenvc
 end

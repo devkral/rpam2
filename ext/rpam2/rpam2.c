@@ -278,8 +278,8 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
 
 void Init_rpam2(){
     rpam2 = rb_define_module("Rpam2");
-    rb_define_singleton_method(rpam2, "_auth", method_authpam, 5);
-    rb_define_singleton_method(rpam2, "_account", method_accountpam, 2);
-    rb_define_singleton_method(rpam2, "_getenv", method_getenvpam, 7);
-    rb_define_singleton_method(rpam2, "_listenv", method_listenvpam, 6);
+    rb_define_singleton_method(rpam2, "_authc", method_authpam, 5);
+    rb_define_singleton_method(rpam2, "_accountc", method_accountpam, 2);
+    rb_define_singleton_method(rpam2, "_getenvc", method_getenvpam, 7);
+    rb_define_singleton_method(rpam2, "_listenvc", method_listenvpam, 6);
 }
