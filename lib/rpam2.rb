@@ -4,8 +4,7 @@ require 'set'
 require 'rpam2/rpam2'
 
 module Rpam2
-  VERSION = 3.1
-
+  VERSION = 4.0
   class << self
     attr_accessor :fake_data
     @@fake_data = nil

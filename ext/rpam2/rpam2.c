@@ -1,6 +1,66 @@
 #include "ruby.h"
 #include <string.h>
+
+#ifndef WITHOUT_PAM_HEADER
 #include <security/pam_appl.h>
+#else
+/* status */
+#define PAM_SUCCESS 0
+#define PAM_BUF_ERR 5
+#define PAM_CONV_ERR 19
+
+/* items */
+#define PAM_SERVICE 1
+#define PAM_CONV 5
+#define PAM_RHOST 4
+#define PAM_RUSER 8
+
+/* Messages */
+#define PAM_PROMPT_ECHO_OFF 1
+#define PAM_PROMPT_ECHO_ON 2
+#define PAM_ERROR_MSG 3
+#define PAM_TEXT_INFO 4
+
+typedef struct pam_handle pam_handle_t;
+
+
+struct pam_message {
+    int msg_style;
+    const char *msg;
+};
+
+struct pam_response {
+    char *resp;
+    int	resp_retcode;	/* currently un-used, zero expected */
+};
+
+/* The actual conversation structure itself */
+
+struct pam_conv {
+    int (*conv)(int num_msg, const struct pam_message **msg,
+		struct pam_response **resp, void *appdata_ptr);
+    void *appdata_ptr;
+};
+
+// fix implicit function warnings:
+
+int pam_start(const char *service_name, const char *user, const struct pam_conv *pam_conversation, pam_handle_t **pamh);
+int pam_end(pam_handle_t *pamh, int pam_status);
+
+int pam_authenticate(pam_handle_t *pamh, int flags);
+int pam_acct_mgmt(pam_handle_t *pamh, int flags);
+const char *pam_strerror(pam_handle_t *pamh, int errnum);
+int pam_set_item(pam_handle_t *pamh, int item_type, const void *item);
+int pam_get_item(const pam_handle_t *pamh, int item_type, const void **item);
+char **pam_getenvlist(pam_handle_t *pamh);
+const char *pam_getenv(pam_handle_t *pamh, const char *name);
+
+int pam_open_session(pam_handle_t *pamh, int flags);
+int pam_close_session(pam_handle_t *pamh, int flags);
+
+#endif
+
+
 
 static const char *const
 rpam_default_servicename = "rpam";
@@ -162,7 +222,7 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
 
 static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE envname, VALUE opensession, VALUE ruser, VALUE rhost) {
     pam_handle_t* pamh = NULL;
-    const char *c_ret;
+    const char *c_ret=NULL;
     VALUE ruby_ret;
     unsigned int result = 0;
     struct pam_conv auth_c = {0,0};
@@ -214,9 +274,9 @@ static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VAL
 static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VALUE password, VALUE opensession, VALUE ruser, VALUE rhost){
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
-    char *last;
-    char **envlist;
-    char **tmpenvlist;
+    char *last=NULL;
+    char **envlist=NULL;
+    char **tmpenvlist=NULL;
     VALUE ruby_ret;
     struct pam_conv auth_c = {0,0};
 
