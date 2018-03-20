@@ -1,5 +1,9 @@
+
+require 'rpam2/rpam2'
+
 module Rpam2
   VERSION = 3.1
+  private_class_method :_auth, :_account, :_getenv, :_listenv
   class << self
     def auth(*args)
       case args.size
@@ -43,5 +47,3 @@ module Rpam2
     end
   end
 end
-
-require 'rpam2/rpam2'
