@@ -1,14 +1,16 @@
 require 'mkmf'
 
-abort "missing pam library" unless have_library("pam","pam_start")
+pam_installed = have_library("pam","pam_start") and  have_header("security/pam_appl.h")
+#pam_installed = false
 
-use_pam_header = have_header("security/pam_appl.h")
-#use_pam_header = false
+
+abort "missing pam library or header" unless pam_installed || ENV['PAM_ALLOW_POLYFILL']=='true'
+
 
 $CFLAGS << " -std=c99 "
 
-if use_pam_header
-  puts "Rpam2 build with pam header."
+if pam_installed
+  puts "Rpam2 build without polyfill" if ENV['PAM_ALLOW_POLYFILL']=='true'
   have_func("pam_end")
   have_func("pam_open_session")
   have_func("pam_close_session")
@@ -17,7 +19,7 @@ if use_pam_header
   have_func("pam_set_item")
   have_func("pam_get_item")
 else
-  puts "Rpam2 build without pam header, use pam polyfills."
+  warn "Rpam2 build didn't find pam headers/library, use pam polyfills.\nONLY FOR TESTS OR IF PAM IS NOT USED. THIS MODE IS NOT SAFE IF PAM IS USED."
   $CFLAGS << "-DWITHOUT_PAM_HEADER=1 "
 end
 

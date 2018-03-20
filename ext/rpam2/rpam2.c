@@ -4,6 +4,7 @@
 #ifndef WITHOUT_PAM_HEADER
 #include <security/pam_appl.h>
 #else
+/* linux pam */
 /* status */
 #define PAM_SUCCESS 0
 #define PAM_BUF_ERR 5

@@ -17,7 +17,7 @@
   else
     puts "Authentication failed"
   end
-  
+
   puts Rpam2.listenv(nil, "user", "password") # uses default (rpam)
   puts Rpam2.listenv("servicename", "user", "password")
   puts Rpam2.listenv("servicename", "user", "password", true)
@@ -31,12 +31,19 @@
 
 == INSTALL:
 
-* gem install rpam2
+gem install rpam2
+
+or if it should not depend on pam:
+
+PAM_ALLOW_POLYFILL=true gem install rpam2
+
+WARNING: Don't use rpam2 in this case except for test. It isn't safe
 
 Or manually:
 
 * gem build rpam2.gemspec
-* gem install ./rpam2-2.0.0.gem
+* gem install ./rpam2-4.0.0.gem
+
 
 == Usage:
 
