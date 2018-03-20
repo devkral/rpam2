@@ -12,6 +12,10 @@ module Rpam2
       end
     end
 
+    def account(servicename, username)
+      self._account(servicename, username)
+    end
+
     def getenv(*args)
       case args.size
         when 4
@@ -40,4 +44,4 @@ module Rpam2
   end
 end
 
-require "rpam2/rpam2"
+require 'rpam2/rpam2'

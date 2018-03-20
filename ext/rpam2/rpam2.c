@@ -90,7 +90,7 @@ static unsigned int _start(pam_handle_t* pamh, VALUE* service, char* password, V
         auth_c.conv = rpam_auth_conversation;
         authw.pw = password;
         auth_c.appdata_ptr = &authw;
-    
+
         result = pam_set_item(pamh, PAM_CONV, &auth_c);
         if (result != PAM_SUCCESS) {
             rb_warn("SET CONV: %s", pam_strerror(pamh, result));
@@ -119,7 +119,7 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qfalse;
     }
-    
+
     result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
     if(result!=PAM_SUCCESS)
         return Qfalse;
@@ -138,7 +138,7 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
     struct pam_conv auth_c = {0,0};
-    
+
     Check_Type(username, T_STRING);
 
     result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
@@ -176,7 +176,7 @@ static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VAL
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qnil;
     }
-    
+
     result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
     if(result != PAM_SUCCESS)
         return Qnil;
@@ -223,13 +223,13 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
     Check_Type(username, T_STRING);
     Check_Type(password, T_STRING);
 
-    
+
     result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
         rb_warn("INIT: %s", pam_strerror(pamh, result));
         return Qnil;
     }
-    
+
     result = _start(pamh, &servicename, StringValueCStr(password), &ruser, &rhost);
     if(result != PAM_SUCCESS)
         return Qnil;
@@ -279,8 +279,7 @@ static VALUE method_listenvpam(VALUE self, VALUE servicename, VALUE username, VA
 void Init_rpam2(){
     rpam2 = rb_define_module("Rpam2");
     rb_define_singleton_method(rpam2, "_auth", method_authpam, 5);
-    rb_define_singleton_method(rpam2, "account", method_accountpam, 2);
+    rb_define_singleton_method(rpam2, "_account", method_accountpam, 2);
     rb_define_singleton_method(rpam2, "_getenv", method_getenvpam, 7);
     rb_define_singleton_method(rpam2, "_listenv", method_listenvpam, 6);
 }
-
