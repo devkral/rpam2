@@ -76,7 +76,7 @@ module Rpam2
       raise TypeError unless varname.is_a? String
       return _getenvc(servicename, username, password, opensession, varname, ruser, rhost) unless use_fake?(servicename)
       return nil unless self.fake_data.fetch(:usernames, Set.new).include?(username)
-      return nil if self.fake_data[:env].blank? || self.fake_data[:password] != password
+      return nil unless self.fake_data[:env] && self.fake_data[:password] == password
       self.fake_data[:env].fetch(varname, nil)
     end
 
