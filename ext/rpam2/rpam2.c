@@ -195,9 +195,6 @@ static VALUE method_authpam(VALUE self, VALUE servicename, VALUE username, VALUE
     unsigned int result = 0;
     struct pam_conv auth_c = {0,0};
 
-    Check_Type(username, T_STRING);
-    Check_Type(password, T_STRING);
-
     result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
         rb_warn("INIT: %s", pam_strerror(pamh, result));
@@ -222,8 +219,6 @@ static VALUE method_accountpam(VALUE self, VALUE servicename, VALUE username) {
     pam_handle_t* pamh = NULL;
     unsigned int result=0;
     struct pam_conv auth_c = {0,0};
-
-    Check_Type(username, T_STRING);
 
     result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
@@ -250,10 +245,6 @@ static VALUE method_getenvpam(VALUE self, VALUE servicename, VALUE username, VAL
     VALUE ruby_ret;
     unsigned int result = 0;
     struct pam_conv auth_c = {0,0};
-
-    Check_Type(username, T_STRING);
-    Check_Type(password, T_STRING);
-    Check_Type(envname, T_STRING);
 
     result = pam_start(rpam_default_servicename, StringValueCStr(username), &auth_c, &pamh);
     if (result != PAM_SUCCESS) {
