@@ -1,6 +1,6 @@
 require 'mkmf'
 
-pam_installed = have_library("pam","pam_start") and  have_header("security/pam_appl.h")
+pam_installed = have_library("pam","pam_start") and have_header("security/pam_appl.h")
 #pam_installed = false
 
 
