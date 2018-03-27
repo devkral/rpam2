@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "rpam2"
-  s.version = "4.0.1"
-  s.date = "2018-03-23"
+  s.version = "4.0.2"
+  s.date = "2018-03-27"
   s.summary = "PAM integration with ruby."
   s.email = "devkral@web.de"
   s.description = "Ruby PAM (Pluggable Authentication Modules) integration"
