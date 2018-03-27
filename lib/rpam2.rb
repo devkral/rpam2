@@ -70,11 +70,11 @@ module Rpam2
       self.fake_data.fetch(:usernames, Set.new).include?(username)
     end
 
-    def _getenv(servicename, username, password, opensession, varname, ruser, rhost)
+    def _getenv(servicename, username, password, varname, opensession, ruser, rhost)
       raise TypeError unless username.is_a? String
       raise TypeError unless password.is_a? String
       raise TypeError unless varname.is_a? String
-      return _getenvc(servicename, username, password, opensession, varname, ruser, rhost) unless use_fake?(servicename)
+      return _getenvc(servicename, username, password, varname, opensession, ruser, rhost) unless use_fake?(servicename)
       return nil unless self.fake_data.fetch(:usernames, Set.new).include?(username)
       return nil unless self.fake_data[:env] && self.fake_data[:password] == password
       self.fake_data[:env].fetch(varname, nil)
