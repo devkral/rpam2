@@ -5,7 +5,7 @@
 == DESCRIPTION:
 
   This extension provides a PAM (Pluggable Authentication Modules)
-  integration to ruby. It is inspired by rpam but provides much functionality
+  integration to ruby. It is inspired by rpam but provides more functionality
   and is licensed under MIT.
 
 == EXAMPLE:
