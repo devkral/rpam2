@@ -2,6 +2,7 @@
 # INSECURE!!!!!!
 auth required pam_permit.so
 account required pam_permit.so
+password required pam_deny.so
 # getting email of user (own project)
 session optional pam_email_extractor.so
 # prepare environment
