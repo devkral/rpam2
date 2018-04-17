@@ -1,0 +1,8 @@
+# simplest version: allow everything and read env in session
+# INSECURE!!!!!!
+auth required pam_permit.so
+account required pam_permit.so
+# getting email of user (own project)
+session optional pam_email_extractor.so
+# prepare environment
+session optional pam_env.so

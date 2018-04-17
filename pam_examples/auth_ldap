@@ -1,0 +1,11 @@
+# use ldap
+account required pam_ldap.so
+auth required pam_ldap.so
+# getting email of user (own project)
+auth optional pam_email_extractor.so
+password required pam_ldap.so
+session required pam_ldap.so
+# getting email of user (own project)
+session optional pam_email_extractor.so
+# prepare environment
+session optional pam_env.so
